@@ -14,16 +14,22 @@ PALETTE = {
 
 def monthly_classes(cards: pd.DataFrame) -> go.Figure:
     grouped = cards.groupby(["Месяц", "Целевой класс"], observed=False).size().unstack(fill_value=0)
-    months = pd.to_datetime(grouped.index.astype(str), format="%Y-%m", errors="coerce").strftime("%m.%Y")
+    month_dates = pd.to_datetime(grouped.index.astype(str), format="%Y-%m", errors="coerce")
+    months = month_dates.strftime("%m.%y")
+    full_months = month_dates.strftime("%m.%Y")
+    tick_months = list(months[::3])
+    if len(months) > 1 and months[-1] not in tick_months:
+        tick_months.append(months[-1])
     fig = go.Figure()
     for label in ["Инцидент (Решён)", "False Positive", "Другой вердикт", "Не размечено"]:
         if label in grouped.columns:
             fig.add_bar(
                 x=months,
                 y=grouped[label],
+                customdata=full_months,
                 name=label,
                 marker_color=PALETTE[label],
-                hovertemplate="%{x}<br>%{y:,} карточек<extra>" + label + "</extra>",
+                hovertemplate="%{customdata}<br>%{y:,} карточек<extra>" + label + "</extra>",
             )
     fig.update_layout(
         barmode="stack",
@@ -34,7 +40,15 @@ def monthly_classes(cards: pd.DataFrame) -> go.Figure:
         yaxis_title="Карточки",
         template="plotly_white",
     )
-    fig.update_xaxes(type="category", categoryorder="array", categoryarray=months, tickangle=-30)
+    fig.update_xaxes(
+        type="category",
+        categoryorder="array",
+        categoryarray=months,
+        tickmode="array",
+        tickvals=tick_months,
+        ticktext=tick_months,
+        tickangle=-35,
+    )
     return fig
 
 
