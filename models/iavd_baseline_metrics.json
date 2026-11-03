@@ -57,45 +57,93 @@
     },
     "cost_thresholds": {
       "50": {
-        "threshold": 0.09293362256025056,
-        "calibration_cost": 8834.0,
-        "test_metrics": {
-          "average_precision": 0.2842703006592852,
-          "roc_auc": 0.7170790081537677,
-          "accuracy": 0.5677117572692794,
-          "precision": 0.18949238578680203,
-          "recall": 0.7676331482623895,
-          "review_rate": 0.49810366624525915,
-          "positive_share": 0.1229582806573957,
-          "cost_fp_plus_k_fn": 72467,
-          "confusion_matrix": {
-            "tn": 18720,
-            "fp": 15967,
-            "fn": 1130,
-            "tp": 3733
-          },
-          "threshold": 0.09293362256025056
+        "beta": 7.0710678118654755,
+        "minimum_cost_strategy": {
+          "threshold": 0.09293362256025056,
+          "calibration_cost": 8834.0,
+          "test_metrics": {
+            "average_precision": 0.2842703006592852,
+            "roc_auc": 0.7170790081537677,
+            "accuracy": 0.5677117572692794,
+            "precision": 0.18949238578680203,
+            "recall": 0.7676331482623895,
+            "review_rate": 0.49810366624525915,
+            "positive_share": 0.1229582806573957,
+            "cost_fp_plus_k_fn": 72467,
+            "confusion_matrix": {
+              "tn": 18720,
+              "fp": 15967,
+              "fn": 1130,
+              "tp": 3733
+            },
+            "threshold": 0.09293362256025056
+          }
+        },
+        "maximum_fbeta_strategy": {
+          "threshold": 0.09293362256025056,
+          "calibration_fbeta": 0.7672506916084837,
+          "test_metrics": {
+            "average_precision": 0.2842703006592852,
+            "roc_auc": 0.7170790081537677,
+            "accuracy": 0.5677117572692794,
+            "precision": 0.18949238578680203,
+            "recall": 0.7676331482623895,
+            "review_rate": 0.49810366624525915,
+            "positive_share": 0.1229582806573957,
+            "cost_fp_plus_k_fn": 72467,
+            "confusion_matrix": {
+              "tn": 18720,
+              "fp": 15967,
+              "fn": 1130,
+              "tp": 3733
+            },
+            "threshold": 0.09293362256025056
+          }
         }
       },
       "100": {
-        "threshold": 0.09293362256025056,
-        "calibration_cost": 12984.0,
-        "test_metrics": {
-          "average_precision": 0.2842703006592852,
-          "roc_auc": 0.7170790081537677,
-          "accuracy": 0.5677117572692794,
-          "precision": 0.18949238578680203,
-          "recall": 0.7676331482623895,
-          "review_rate": 0.49810366624525915,
-          "positive_share": 0.1229582806573957,
-          "cost_fp_plus_k_fn": 128967,
-          "confusion_matrix": {
-            "tn": 18720,
-            "fp": 15967,
-            "fn": 1130,
-            "tp": 3733
-          },
-          "threshold": 0.09293362256025056
+        "beta": 10.0,
+        "minimum_cost_strategy": {
+          "threshold": 0.09293362256025056,
+          "calibration_cost": 12984.0,
+          "test_metrics": {
+            "average_precision": 0.2842703006592852,
+            "roc_auc": 0.7170790081537677,
+            "accuracy": 0.5677117572692794,
+            "precision": 0.18949238578680203,
+            "recall": 0.7676331482623895,
+            "review_rate": 0.49810366624525915,
+            "positive_share": 0.1229582806573957,
+            "cost_fp_plus_k_fn": 128967,
+            "confusion_matrix": {
+              "tn": 18720,
+              "fp": 15967,
+              "fn": 1130,
+              "tp": 3733
+            },
+            "threshold": 0.09293362256025056
+          }
+        },
+        "maximum_fbeta_strategy": {
+          "threshold": 0.09293362256025056,
+          "calibration_fbeta": 0.8162338121859742,
+          "test_metrics": {
+            "average_precision": 0.2842703006592852,
+            "roc_auc": 0.7170790081537677,
+            "accuracy": 0.5677117572692794,
+            "precision": 0.18949238578680203,
+            "recall": 0.7676331482623895,
+            "review_rate": 0.49810366624525915,
+            "positive_share": 0.1229582806573957,
+            "cost_fp_plus_k_fn": 128967,
+            "confusion_matrix": {
+              "tn": 18720,
+              "fp": 15967,
+              "fn": 1130,
+              "tp": 3733
+            },
+            "threshold": 0.09293362256025056
+          }
         }
       }
     }
@@ -160,6 +208,11 @@
     "Есть powershell"
   ],
   "threshold": 0.5,
+  "threshold_comparison": "On the calibration period, compare minimum Cost(tau)=k*FN+FP against maximum F_beta with beta=sqrt(k); evaluate both on the later test period.",
+  "shap_sample": {
+    "path": "models/iavd_baseline_shap.npz",
+    "rows": 1000
+  },
   "cost_ratio_definition": "cost = FP + k * FN; evaluate the course-specified k=50 and k=100 scenarios",
   "positive_share": 0.15465799561053067,
   "sklearn_version": "1.9.1"

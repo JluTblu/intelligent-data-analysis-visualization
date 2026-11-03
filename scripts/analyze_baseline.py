@@ -34,7 +34,8 @@ def main() -> None:
     for month, group in data.groupby("Месяц", sort=True):
         y = group["y_true"]
         counts = confusion(y, group["y_pred_0_5"])
-        cost_counts = confusion(y, group["y_pred_k50"])
+        cost_counts = confusion(y, group["y_pred_cost_k50"])
+        fbeta_counts = confusion(y, group["y_pred_fbeta_k50"])
         rows.append({
             "Месяц": month,
             "Карточек": len(group),
@@ -44,16 +45,23 @@ def main() -> None:
             "Проверено при пороге 0.5, %": round(100 * float(group["y_pred_0_5"].mean()), 2),
             "FP при пороге 0.5": counts["FP"],
             "FN при пороге 0.5": counts["FN"],
-            "Проверено при пороге k=50, %": round(100 * float(group["y_pred_k50"].mean()), 2),
+            "Проверено при минимуме стоимости k=50, %": round(100 * float(group["y_pred_cost_k50"].mean()), 2),
             "FP при пороге k=50": cost_counts["FP"],
             "FN при пороге k=50": cost_counts["FN"],
             "Цена k=50": cost_counts["FP"] + 50 * cost_counts["FN"],
+            "Проверено при максимуме Fβ (β=√50), %": round(100 * float(group["y_pred_fbeta_k50"].mean()), 2),
+            "FP при максимуме Fβ (β=√50)": fbeta_counts["FP"],
+            "FN при максимуме Fβ (β=√50)": fbeta_counts["FN"],
+            "Цена k=50 при максимуме Fβ": fbeta_counts["FP"] + 50 * fbeta_counts["FN"],
         })
 
     y = data["y_true"]
     policies = {
         "Порог 0.5": data["y_pred_0_5"],
-        "Порог из калибровки k=50": data["y_pred_k50"],
+        "Минимум стоимости, k=50": data["y_pred_cost_k50"],
+        "Максимум Fβ, β=√50": data["y_pred_fbeta_k50"],
+        "Минимум стоимости, k=100": data["y_pred_cost_k100"],
+        "Максимум Fβ, β=√100": data["y_pred_fbeta_k100"],
         "Проверять все карточки": pd.Series(1, index=data.index),
         "Не проверять карточки": pd.Series(0, index=data.index),
     }

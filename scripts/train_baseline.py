@@ -29,6 +29,7 @@ MODEL_PATH = MODEL_DIR / "iavd_baseline.joblib"
 METRICS_PATH = MODEL_DIR / "iavd_baseline_metrics.json"
 RANDOM_PREDICTIONS_PATH = PROJECT_DIR / "data" / "processed" / "iavd_baseline_random_test_predictions.parquet"
 TIME_PREDICTIONS_PATH = PROJECT_DIR / "data" / "processed" / "iavd_baseline_time_test_predictions.parquet"
+SHAP_SAMPLE_PATH = MODEL_DIR / "iavd_baseline_shap.npz"
 KEY = "EntityId"
 TARGET = "y"
 THRESHOLD = 0.5
@@ -102,6 +103,49 @@ def select_cost_threshold(y: pd.Series, scores: np.ndarray, k: int) -> tuple[flo
     return float(thresholds[best_index]), float(costs[best_index])
 
 
+def select_fbeta_threshold(y: pd.Series, scores: np.ndarray, beta: float) -> tuple[float, float]:
+    """Порог максимума F_beta по курсовому правилу сравнения стратегий."""
+    precision, recall, thresholds = precision_recall_curve(y, scores)
+    beta_squared = beta**2
+    denominator = beta_squared * precision[:-1] + recall[:-1]
+    fbeta = np.divide(
+        (1 + beta_squared) * precision[:-1] * recall[:-1],
+        denominator,
+        out=np.zeros_like(denominator),
+        where=denominator > 0,
+    )
+    best_index = int(np.argmax(fbeta))
+    return float(thresholds[best_index]), float(fbeta[best_index])
+
+
+def save_shap_sample(model: Pipeline, X: pd.DataFrame, y: pd.Series, ids: pd.Series, scores: np.ndarray) -> int:
+    """Предрассчитывает SHAP для глобальной страницы XAI; модель та же, что проверялась по времени."""
+    import shap
+
+    sample_ids = X.sample(n=min(1000, len(X)), random_state=RANDOM_STATE).index
+    encoded = model.named_steps["encode"].transform(X.loc[sample_ids])
+    estimator = model.named_steps["classifier"]
+    explainer = shap.TreeExplainer(estimator)
+    values = explainer.shap_values(encoded)
+    if isinstance(values, list):
+        values = values[1]
+    values = np.asarray(values)
+    if values.ndim == 3:
+        values = values[:, :, 1]
+    base = float(np.ravel(explainer.expected_value)[-1])
+    np.savez_compressed(
+        SHAP_SAMPLE_PATH,
+        values=values,
+        base=base,
+        features=np.asarray(X.columns, dtype=str),
+        data=X.loc[sample_ids].astype(str).to_numpy(dtype=str),
+        entity_id=ids.loc[sample_ids].to_numpy(),
+        y=y.loc[sample_ids].to_numpy(),
+        score=scores[X.index.get_indexer(sample_ids)],
+    )
+    return len(sample_ids)
+
+
 def main() -> None:
     if not DATA.exists():
         raise FileNotFoundError(f"Не найден набор признаков: {DATA}")
@@ -144,6 +188,13 @@ def main() -> None:
     time_metrics, time_score, time_pred_05 = evaluate(time_model, X.loc[time_test], y.loc[time_test])
     time_test_rows = data.loc[time_test]
     time_y_true = y.loc[time_test].to_numpy()
+    shap_sample_rows = save_shap_sample(
+        time_model,
+        X.loc[time_test],
+        y.loc[time_test],
+        time_test_rows[KEY],
+        time_score,
+    )
     thresholds = {}
     time_predictions = {
         KEY: time_test_rows[KEY].to_numpy(),
@@ -152,21 +203,41 @@ def main() -> None:
         "y_pred_0_5": time_pred_05,
     }
     for k in COST_RATIOS:
-        threshold, calibration_cost = select_cost_threshold(
+        cost_threshold, calibration_cost = select_cost_threshold(
             y.loc[time_calibration], calibration_scores, k
         )
-        test_metrics, _, test_prediction = evaluate(
-            time_model, X.loc[time_test], y.loc[time_test], threshold
+        cost_metrics, _, cost_prediction = evaluate(
+            time_model, X.loc[time_test], y.loc[time_test], cost_threshold
         )
-        confusion = test_metrics["confusion_matrix"]
-        test_metrics["cost_fp_plus_k_fn"] = confusion["fp"] + k * confusion["fn"]
-        test_metrics["threshold"] = threshold
+        cost_confusion = cost_metrics["confusion_matrix"]
+        cost_metrics["cost_fp_plus_k_fn"] = cost_confusion["fp"] + k * cost_confusion["fn"]
+        cost_metrics["threshold"] = cost_threshold
+
+        beta = float(np.sqrt(k))
+        fbeta_threshold, calibration_fbeta = select_fbeta_threshold(
+            y.loc[time_calibration], calibration_scores, beta
+        )
+        fbeta_metrics, _, fbeta_prediction = evaluate(
+            time_model, X.loc[time_test], y.loc[time_test], fbeta_threshold
+        )
+        fbeta_confusion = fbeta_metrics["confusion_matrix"]
+        fbeta_metrics["cost_fp_plus_k_fn"] = fbeta_confusion["fp"] + k * fbeta_confusion["fn"]
+        fbeta_metrics["threshold"] = fbeta_threshold
         thresholds[str(k)] = {
-            "threshold": threshold,
-            "calibration_cost": calibration_cost,
-            "test_metrics": test_metrics,
+            "beta": beta,
+            "minimum_cost_strategy": {
+                "threshold": cost_threshold,
+                "calibration_cost": calibration_cost,
+                "test_metrics": cost_metrics,
+            },
+            "maximum_fbeta_strategy": {
+                "threshold": fbeta_threshold,
+                "calibration_fbeta": calibration_fbeta,
+                "test_metrics": fbeta_metrics,
+            },
         }
-        time_predictions[f"y_pred_k{k}"] = test_prediction
+        time_predictions[f"y_pred_cost_k{k}"] = cost_prediction
+        time_predictions[f"y_pred_fbeta_k{k}"] = fbeta_prediction
 
     metrics = {
         "target": {"1": "Решён", "0": "False Positive"},
@@ -205,6 +276,8 @@ def main() -> None:
         "categorical_columns": categorical,
         "numeric_columns": numeric,
         "threshold": THRESHOLD,
+        "threshold_comparison": "On the calibration period, compare minimum Cost(tau)=k*FN+FP against maximum F_beta with beta=sqrt(k); evaluate both on the later test period.",
+        "shap_sample": {"path": str(SHAP_SAMPLE_PATH.relative_to(PROJECT_DIR)), "rows": shap_sample_rows},
         "cost_ratio_definition": "cost = FP + k * FN; evaluate the course-specified k=50 and k=100 scenarios",
         "positive_share": float(y.mean()),
         "sklearn_version": sklearn.__version__,
@@ -231,7 +304,7 @@ def main() -> None:
     print(json.dumps(random_metrics, ensure_ascii=False, indent=2))
     print("Поздние даты при пороге 0,5:")
     print(json.dumps(time_metrics, ensure_ascii=False, indent=2))
-    print("Пороги по цене ошибок:")
+    print("Сравнение порога минимальной стоимости и максимума F_beta:")
     print(json.dumps(thresholds, ensure_ascii=False, indent=2))
 
 
