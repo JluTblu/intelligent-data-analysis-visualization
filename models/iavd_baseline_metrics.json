@@ -1,0 +1,166 @@
+{
+  "target": {
+    "1": "Решён",
+    "0": "False Positive"
+  },
+  "random_split": {
+    "test_size": 0.2,
+    "stratified": true,
+    "random_state": 42,
+    "train_rows": 158196,
+    "test_rows": 39550,
+    "metrics_at_threshold": {
+      "average_precision": 0.6912002698478209,
+      "roc_auc": 0.904293641169353,
+      "accuracy": 0.8911251580278129,
+      "precision": 0.7700566656725321,
+      "recall": 0.42210233774726175,
+      "review_rate": 0.0847787610619469,
+      "positive_share": 0.15466498103666246,
+      "cost_fp_plus_k_fn": null,
+      "confusion_matrix": {
+        "tn": 32662,
+        "fp": 771,
+        "fn": 3535,
+        "tp": 2582
+      }
+    }
+  },
+  "time_split": {
+    "rule": "train on earlier 70%, choose threshold on next 10%, test on latest 20% by Создан",
+    "train_cutoff_utc": "2025-03-23T07:07:32+00:00",
+    "calibration_cutoff_utc": "2025-06-05T07:37:18+00:00",
+    "train_rows": 138422,
+    "calibration_rows": 19774,
+    "test_rows": 39550,
+    "train_start_utc": "2024-05-17T07:51:45+00:00",
+    "train_end_utc": "2025-03-23T06:58:37+00:00",
+    "calibration_start_utc": "2025-03-23T07:16:27+00:00",
+    "calibration_end_utc": "2025-06-05T07:37:13+00:00",
+    "test_start_utc": "2025-06-05T07:37:18+00:00",
+    "test_end_utc": "2025-11-20T12:04:59+00:00",
+    "metrics_at_threshold_0_5": {
+      "average_precision": 0.2842703006592852,
+      "roc_auc": 0.7170790081537677,
+      "accuracy": 0.8733754740834386,
+      "precision": 0.44704163623082543,
+      "recall": 0.12584824182603332,
+      "review_rate": 0.03461441213653603,
+      "positive_share": 0.1229582806573957,
+      "cost_fp_plus_k_fn": null,
+      "confusion_matrix": {
+        "tn": 33930,
+        "fp": 757,
+        "fn": 4251,
+        "tp": 612
+      }
+    },
+    "cost_thresholds": {
+      "50": {
+        "threshold": 0.09293362256025056,
+        "calibration_cost": 8834.0,
+        "test_metrics": {
+          "average_precision": 0.2842703006592852,
+          "roc_auc": 0.7170790081537677,
+          "accuracy": 0.5677117572692794,
+          "precision": 0.18949238578680203,
+          "recall": 0.7676331482623895,
+          "review_rate": 0.49810366624525915,
+          "positive_share": 0.1229582806573957,
+          "cost_fp_plus_k_fn": 72467,
+          "confusion_matrix": {
+            "tn": 18720,
+            "fp": 15967,
+            "fn": 1130,
+            "tp": 3733
+          },
+          "threshold": 0.09293362256025056
+        }
+      },
+      "100": {
+        "threshold": 0.09293362256025056,
+        "calibration_cost": 12984.0,
+        "test_metrics": {
+          "average_precision": 0.2842703006592852,
+          "roc_auc": 0.7170790081537677,
+          "accuracy": 0.5677117572692794,
+          "precision": 0.18949238578680203,
+          "recall": 0.7676331482623895,
+          "review_rate": 0.49810366624525915,
+          "positive_share": 0.1229582806573957,
+          "cost_fp_plus_k_fn": 128967,
+          "confusion_matrix": {
+            "tn": 18720,
+            "fp": 15967,
+            "fn": 1130,
+            "tp": 3733
+          },
+          "threshold": 0.09293362256025056
+        }
+      }
+    }
+  },
+  "model": {
+    "class": "HistGradientBoostingClassifier",
+    "max_iter": 200,
+    "learning_rate": 0.08,
+    "max_leaf_nodes": 31,
+    "l2_regularization": 1.0
+  },
+  "feature_columns": [
+    "Критичность",
+    "Критичность инцидента в источнике",
+    "Тип инцидента",
+    "Источник инцидента",
+    "Вендор из сием",
+    "Конвейер SIEM",
+    "Наименование",
+    "Пиктограмма IRP",
+    "categoryHigh",
+    "categoryLow",
+    "categoryMain",
+    "processName",
+    "Имя родителя процесса",
+    "object",
+    "Привилегии аккаунта",
+    "Теги",
+    "Час",
+    "День недели",
+    "Количество инцидентов",
+    "Алертов в карточке",
+    "Значений инцидента",
+    "Длина команды",
+    "Есть powershell"
+  ],
+  "categorical_columns": [
+    "Критичность",
+    "Критичность инцидента в источнике",
+    "Тип инцидента",
+    "Источник инцидента",
+    "Вендор из сием",
+    "Конвейер SIEM",
+    "Наименование",
+    "Пиктограмма IRP",
+    "categoryHigh",
+    "categoryLow",
+    "categoryMain",
+    "processName",
+    "Имя родителя процесса",
+    "object",
+    "Привилегии аккаунта",
+    "Теги"
+  ],
+  "numeric_columns": [
+    "Час",
+    "День недели",
+    "Количество инцидентов",
+    "Алертов в карточке",
+    "Значений инцидента",
+    "Длина команды",
+    "Есть powershell"
+  ],
+  "threshold": 0.5,
+  "cost_ratio_definition": "cost = FP + k * FN; evaluate the course-specified k=50 and k=100 scenarios",
+  "positive_share": 0.15465799561053067,
+  "sklearn_version": "1.9.1"
+}
