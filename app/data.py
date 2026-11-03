@@ -21,7 +21,7 @@ TARGET_POSITIVE = "Решён"
 TARGET_NEGATIVE = "False Positive"
 
 
-def _display_json_values(value) -> str:
+def display_json_values(value) -> str:
     if pd.isna(value):
         return "Не указано"
     text = str(value)
@@ -45,8 +45,8 @@ def load_cards() -> pd.DataFrame:
     cards["Дата"] = cards["Создан"].dt.normalize()
     cards["Месяц"] = cards["Создан"].dt.strftime("%Y-%m")
 
-    cards["Источник инцидента"] = cards["Источник инцидента"].map(_display_json_values)
-    cards["Тип инцидента"] = cards["Тип инцидента"].map(_display_json_values)
+    cards["Источник инцидента"] = cards["Источник инцидента"].map(display_json_values)
+    cards["Тип инцидента"] = cards["Тип инцидента"].map(display_json_values)
     cards["Целевой класс"] = cards["Вердикт"].map(
         {TARGET_POSITIVE: "Инцидент (Решён)", TARGET_NEGATIVE: "False Positive"}
     )

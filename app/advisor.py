@@ -8,6 +8,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
+from data import display_json_values
 from features import RAW_COLUMNS, build_features
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -91,6 +92,9 @@ def queue_for_threshold(state_id: str, threshold: float) -> tuple[pd.DataFrame, 
     })[
         ["EntityId", "Создан (UTC)", "Критичность", "Категория IRP", "Тип инцидента", "Источник SIEM", "Правило", "Оценка класса «Решён»"]
     ].head(500).reset_index(drop=True)
+    table["Создан (UTC)"] = table["Создан (UTC)"].dt.strftime("%d.%m.%Y %H:%M:%S")
+    for column in ("Тип инцидента", "Источник SIEM"):
+        table[column] = table[column].map(display_json_values)
     return table, {
         "total": len(scores),
         "flagged": len(flagged),

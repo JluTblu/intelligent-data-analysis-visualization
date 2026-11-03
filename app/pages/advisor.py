@@ -19,7 +19,16 @@ run_info = ""
 k_queue = f"{advisor.count_unlabeled():,}".replace(",", " ")
 k_flagged = "—"
 review_share = "—"
-queue_table = pd.DataFrame()
+queue_table = pd.DataFrame(columns=[
+    "EntityId",
+    "Создан (UTC)",
+    "Критичность",
+    "Категория IRP",
+    "Тип инцидента",
+    "Источник SIEM",
+    "Правило",
+    "Оценка класса «Решён»",
+])
 
 test_precision = f"{_default_eval['precision']:.1%}".replace(".", ",")
 test_recall = f"{_default_eval['recall']:.1%}".replace(".", ",")
@@ -33,7 +42,7 @@ def _strategy_code(value: str) -> str:
     return "fbeta" if value == "Максимум Fβ" else "cost"
 
 
-def _refresh_queue(state: State):
+def _refresh_queue(state: State, show_queue: bool = False):
     sid = get_state_id(state)
     table, summary = advisor.queue_for_threshold(sid, float(state.threshold))
     with state as s:
@@ -42,6 +51,8 @@ def _refresh_queue(state: State):
         s.k_flagged = f"{summary['flagged']:,}".replace(",", " ") if summary["total"] else "0"
         s.review_share = f"{summary['share']:.1%}".replace(".", ",") if summary["total"] else "0,0%"
         s.threshold_label = f"{float(state.threshold):.3f}".replace(".", ",")
+        if show_queue:
+            s.has_result = True
 
 
 def _update_choice(state: State):
@@ -83,7 +94,7 @@ def start_inference(state: State):
     with state as s:
         s.running = True
         s.progress = 0
-        s.run_info = "Рассчитываю очередь…"
+        s.run_info = "Оцениваю карточки без вердикта. Расчёт может занять несколько секунд; очередь появится автоматически."
     invoke_long_callback(
         state,
         advisor.score_unlabeled,
@@ -104,9 +115,11 @@ def on_inference_status(state: State, status, result=None):
         state.running = False
         if status:
             state.progress = 100
-            state.has_result = True
-            state.run_info = f"Оценено карточек: {result['rows']:,}.".replace(",", " ")
-            _refresh_queue(state)
+            _refresh_queue(state, show_queue=True)
+            state.run_info = (
+                f"Оценено карточек: {result['rows']:,} за "
+                f"{result['seconds']:.2f}".replace(".", ",") + " с."
+            ).replace(",", " ", 1)
             notify(state, "success", "Очередь рассчитана.")
         else:
             state.progress = 0
@@ -159,7 +172,7 @@ page = Markdown("""
 <|part|render={has_result}|class_name=card|
 ### Очередь на просмотр
 
-Первые 500 карточек по оценке модели.
+До 500 карточек выше порога; самые высокие оценки — первыми.
 
 <|{queue_table}|table|page_size=20|>
 |>

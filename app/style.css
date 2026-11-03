@@ -50,6 +50,11 @@ i {
   margin-bottom: 14px;
 }
 
+.chart-description {
+  display: block;
+  margin-bottom: 32px;
+}
+
 .kpi {
   display: block;
   margin-top: 6px;

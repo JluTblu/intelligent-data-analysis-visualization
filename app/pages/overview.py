@@ -1,4 +1,4 @@
-"""Интерактивный обзор потока карточек по материалам практик 2.5–2.6."""
+"""Интерактивный обзор потока карточек по материалам практик 2.5 — 2.6."""
 import pandas as pd
 from taipy.gui import Markdown, State, notify
 
@@ -106,11 +106,11 @@ page = Markdown("""
 <|{kpi_total}|text|class_name=kpi|>
 |>
 <|part|class_name=card|
-**Решён (y=1)**
+**Решён**
 <|{kpi_positive}|text|class_name=kpi|>
 |>
 <|part|class_name=card|
-**False Positive (y=0)**
+**False Positive**
 <|{kpi_fp}|text|class_name=kpi|>
 |>
 |>

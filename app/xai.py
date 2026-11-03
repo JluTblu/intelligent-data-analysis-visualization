@@ -68,7 +68,7 @@ def local_example(name: str, threshold: float = DEFAULT_THRESHOLD) -> tuple[obje
         BASE_VALUE,
         SHAP_DATA[index],
     )
-    y_label = "Решён (y=1)" if SAMPLE_Y[index] == 1 else "False Positive (y=0)"
+    y_label = "Решён" if SAMPLE_Y[index] == 1 else "False Positive"
     prediction = "выше порога — в очередь" if predicted[index] else "ниже порога"
     details = (
         f"**EntityId:** {int(SAMPLE_IDS[index])}  \n"
