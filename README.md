@@ -16,10 +16,12 @@
 
 Промежуточный Parquet сохраняет все 94 исходных поля, в том числе поля категории C. До аудита и исключения утечки цели его нельзя подавать модели.
 
-Запуск скрипта из корня:
+Запуск из корня репозитория:
 
 ```bash
-Datas/.venv/bin/python Datas/scripts/prepare_binary_dataset.py
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/prepare_binary_dataset.py
 ```
 
 ## Требуемый результат ML-трека
@@ -37,7 +39,7 @@ Datas/.venv/bin/python Datas/scripts/prepare_binary_dataset.py
 - **Диагностика модели** — дополнительное объяснение SHAP и PDP/ICE. Оно описывает поведение модели, а не причинность событий.
 
 ```bash
-cd Datas/app
+cd app
 ../.venv/bin/python main.py
 ```
 
@@ -48,11 +50,11 @@ cd Datas/app
 В материалах курса готовый ML-файл `.joblib` не найден, поэтому подготовлена собственная базовая модель для дальнейшей проверки. Она использует 23 производных признака: 16 категориальных и 7 числовых. Модель не заменяет проверку на отложенных по времени данных.
 
 ```bash
-python3 -m venv Datas/.venv
-Datas/.venv/bin/python -m pip install -r Datas/requirements.txt
-Datas/.venv/bin/python Datas/scripts/prepare_binary_dataset.py
-Datas/.venv/bin/python Datas/scripts/build_baseline_features.py
-Datas/.venv/bin/python Datas/scripts/train_baseline.py
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/prepare_binary_dataset.py
+.venv/bin/python scripts/build_baseline_features.py
+.venv/bin/python scripts/train_baseline.py
 ```
 
 Скрипт обучения сохраняет модель, метрики случайного и временного разбиений, тестовые предсказания и SHAP-выборку в `models/` и `data/processed/`.
@@ -69,5 +71,5 @@ Datas/.venv/bin/python Datas/scripts/train_baseline.py
 Пересчитать таблицы по сохранённым временным прогнозам:
 
 ```bash
-Datas/.venv/bin/python Datas/scripts/analyze_baseline.py
+.venv/bin/python scripts/analyze_baseline.py
 ```
